@@ -1,183 +1,315 @@
 """
-app.py - ScamSatark Main Application Entry Point
-Investor Resilience Platform for SANGYAN Hackathon (SEBI / NSDL / IIT BHU)
+app.py - ScamSatark: National Investor Resilience & Deceptive Vector Interception Shield
+Built for SANGYAN Hackathon (SEBI, NSDL & IIT BHU)
 """
 import os
 import streamlit as st
 from PIL import Image, ImageDraw
 from dotenv import load_dotenv
 
-# Import modular team components
-from ui_components import inject_custom_styles, render_hero, render_risk_gauge, render_actionable_redressal
-from ai_scanner import analyze_image_for_scams
-from voice_engine import generate_regional_audio
+# Import modular engines
+from ui_components import inject_custom_styles, render_institutional_header, render_risk_verdict, render_statutory_actions
+from ai_scanner import analyze_image_for_scams, analyze_voice_query_for_scams
+from voice_engine import INDIC_LANGUAGES, generate_regional_audio, get_bhashini_pipeline_metadata
 from sebi_rules import audit_sebi_compliance
 from database import init_db, log_scan, get_radar_analytics
 
-# Initialize system
+# System initialization
 load_dotenv()
 init_db()
 
 st.set_page_config(
-    page_title="ScamSatark | SEBI Investor Resilience",
+    page_title="ScamSatark | SEBI Investor Resilience Shield",
     page_icon="🛡️",
-    layout="centered"
+    layout="wide"
 )
+
 inject_custom_styles()
-render_hero()
+render_institutional_header()
 
-# Sidebar: Language & Configuration
-st.sidebar.header("🌐 Language / भाषा")
-selected_lang = st.sidebar.selectbox("Choose Language", ["हिन्दी (Hindi)", "English", "தமிழ் (Tamil)"])
+# Top Navigation: Language Selection across 12 Indic Languages
+lang_col1, lang_col2 = st.columns([1, 3])
+with lang_col1:
+    selected_lang = st.selectbox(
+        "🌐 भाषा चुनें / Select Language:",
+        list(INDIC_LANGUAGES.keys()),
+        index=0
+    )
+with lang_col2:
+    st.info("💡 **भारत-प्रथम (Bharat-First):** ग्रामीण एवं छोटे शहरों (Tier-2/3) के निवेशकों के लिए 12 भारतीय भाषाओं एवं वॉइस-सपोर्ट युक्त जनहित प्रणाली।")
 
-st.sidebar.markdown("---")
-st.sidebar.header("🔑 Credentials")
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
-
-# Built-in Sample Generator for Quick Judge Testing
-st.sidebar.markdown("---")
-st.sidebar.header("🧪 Instant Demo Scenarios")
-st.sidebar.caption("Click below to test without uploading a file:")
+# Pre-loaded Demo Scenarios for Instant Testing
+st.sidebar.header("🧪 निर्णायक मंडल परीक्षण (Judge Demo Simulator)")
+st.sidebar.caption("बिना कोई फाइल अपलोड किए तुरंत जांचने के लिए नीचे चुनें:")
 sample_choice = st.sidebar.radio(
-    "Select a Scenario:",
-    ["None (Upload Custom Image)", "Sample 1: Telegram VIP 200% Profit Scam", "Sample 2: Fake SEBI Adviser Letter", "Sample 3: Legitimate Statutory Notice"]
+    "परीक्षण परिदृश्य (Test Scenario):",
+    [
+        "None (मैन्युअल जांच / Custom Upload)",
+        "Scenario 1: Telegram VIP 200% Profit Scam (अवैध गारंटी)",
+        "Scenario 2: Fake SEBI Recovery Letter (फर्जी रिकवरी लेटर)",
+        "Scenario 3: Legitimate Registered Broker Advisory (वैध सूचना)"
+    ]
 )
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+**🏛️ नियामक संस्थाएं (Collaborators):**
+- भारतीय प्रतिभूति और विनिमय बोर्ड (SEBI)
+- नेशनल सिक्योरिटीज डिपॉजिटरी लिमिटेड (NSDL)
+- Science & Technology Council, IIT (BHU)
+""")
 
 def create_sample_image(scenario_type: str) -> Image.Image:
-    """Dynamically generates test scam images with visible fraudulent text."""
-    img = Image.new("RGB", (650, 320), color="#1E293B")
+    """Generates synthetic scam evidence images with high-contrast text."""
+    img = Image.new("RGB", (700, 340), color="#0F172A")
     draw = ImageDraw.Draw(img)
     
-    if "Sample 1" in scenario_type:
-        text = "⚡ VIP INTRADAY SIGNALS ⚡\nJoin VIP Group! Guaranteed 200% profit daily.\nDeposit Rs. 10,000 on UPI: trader_raj@okaxis\nSEBI Reg No: SEBI/VIP/2026/PRO\nOnly 3 slots remaining! Send screenshot."
-        draw.text((25, 30), text, fill="#F87171")
-    elif "Sample 2" in scenario_type:
-        text = "GOVERNMENT OF INDIA - FINANCIAL RECOVERY\nDear Investor, your blocked trading funds of Rs 85,000\ncan be recovered under SEBI Guaranteed Recovery.\nPay release fee of Rs 3,500 to Admin Account.\nSEBI Clearance Reg: INA999999999-VIP"
-        draw.text((25, 30), text, fill="#FBBF24")
+    if "Scenario 1" in scenario_type:
+        text = "⚡ VIP INTRADAY OPTION SIGNALS ⚡\nJoin Premium VIP Group! Guaranteed 200% daily profit.\nDeposit Rs. 15,000 to UPI: profit_guru@oksbi\nSEBI Reg No: SEBI/VIP/2026/PRO\nOnly 2 slots left! Send screenshot after payment."
+        draw.text((30, 40), text, fill="#F87171")
+    elif "Scenario 2" in scenario_type:
+        text = "GOVERNMENT OF INDIA - INVESTOR COMPENSATION WING\nDear Investor, your trapped F&O losses of Rs 92,000\nhave been approved for recovery under SEBI Guaranteed Relief Scheme.\nPay release documentation fee of Rs 4,999 to Admin UPI.\nSEBI Clearance Reg: INA999999999-VIP"
+        draw.text((30, 40), text, fill="#FBBF24")
     else:
-        text = "ABC SECURITIES PVT LTD (SEBI Reg: INZ000123456)\nStatutory Investor Advisory:\nInvestments in securities market are subject to market risks.\nRead all scheme related documents carefully before investing.\nNever share your trading passwords or OTPs."
-        draw.text((25, 30), text, fill="#34D399")
+        text = "ABC CAPITAL SERVICES (SEBI Reg: INZ000123456)\nStatutory Investor Cautionary Advisory:\nSecurities investments are subject to market risks.\nRead all scheme documents carefully before committing funds.\nSEBI registered intermediaries never promise guaranteed returns."
+        draw.text((30, 40), text, fill="#34D399")
         
     return img
 
-# Application Tabs
-tab_scan, tab_radar, tab_rules = st.tabs(["📸 Scam & Claim Scanner", "📊 Community Scam Radar", "📜 SEBI Investor Playbook"])
+# Primary Application Tabs
+tab_inspect, tab_voice, tab_radar, tab_bhashini, tab_guardrails = st.tabs([
+    "📸 फोटो / स्क्रीनशॉट जांच (Image Scan)",
+    "🎙️ बोल कर पूछें (Voice Query / Audio)",
+    "📊 राष्ट्रीय थ्रेट रडार (Scam Radar)",
+    "🇮🇳 भाषिणी DPI आर्किटेक्चर (Bhashini DPI)",
+    "📜 SEBI वैधानिक नियम (Statutory Rules)"
+])
 
-# TAB 1: SCANNER
-with tab_scan:
-    st.write("Upload a screenshot from Telegram, WhatsApp, or Instagram to verify legitimacy:")
+# -------------------------------------------------------------
+# TAB 1: SCREENSHOT FORENSIC INSPECTOR
+# -------------------------------------------------------------
+with tab_inspect:
+    st.subheader("1. स्क्रीनशॉट या विज्ञापन की सत्यता जांचें (Inspect Screenshot / Chat)")
+    st.caption("टेलीग्राम, व्हाट्सएप, यूट्यूब या इंस्टाग्राम पर मिले किसी भी मैसेज या विज्ञापन का स्क्रीनशॉट अपलोड करें:")
     
-    uploaded_file = st.file_uploader("Drop image here...", type=["png", "jpg", "jpeg"])
     active_image = None
-    
-    if sample_choice != "None (Upload Custom Image)":
+    if sample_choice != "None (मैन्युअल जांच / Custom Upload)":
         active_image = create_sample_image(sample_choice)
-        st.info(f"Loaded **{sample_choice}** for evaluation:")
-        st.image(active_image, caption="Simulated Evidence", use_container_width=True)
-    elif uploaded_file:
-        active_image = Image.open(uploaded_file)
-        st.image(active_image, caption="Uploaded Evidence", use_container_width=True)
-
-    if active_image and st.button("🔍 Check Scam Risk (जोखिम जांचें)", type="primary", use_container_width=True):
-        with st.spinner("Analyzing deceptive patterns and checking SEBI regulatory rules..."):
+        st.warning(f"परीक्षण मोड सक्रिय: **{sample_choice}** लोड किया गया है।")
+        st.image(active_image, caption="Simulated Scam Evidence", use_container_width=True)
+    else:
+        uploaded_file = st.file_uploader("स्क्रीनशॉट चुनें (PNG, JPG, JPEG)...", type=["png", "jpg", "jpeg"])
+        if uploaded_file:
+            active_image = Image.open(uploaded_file)
+            st.image(active_image, caption="Uploaded Evidence", use_container_width=True)
+            
+    if active_image and st.button("🔍 जोखिम एवं वैधानिक जांच करें (Verify Scam Risk)", type="primary", use_container_width=True):
+        with st.spinner("AI विज़न एवं SEBI वैधानिक नियमों के आधार पर जांच की जा रही है..."):
             try:
-                # 1. AI Vision Analysis (Gayatri)
-                ai_res = analyze_image_for_scams(active_image, selected_lang, api_key)
+                # 1. Multimodal AI Scan
+                ai_data = analyze_image_for_scams(active_image, selected_lang)
                 
-                # 2. SEBI Regulatory Compliance Check (Pranav)
-                sebi_audit = audit_sebi_compliance(ai_res.get("raw_text", ""))
+                # 2. Statutory SEBI Regulatory Check
+                sebi_data = audit_sebi_compliance(ai_data.get("raw_text", ""))
                 
-                # 3. Blended Composite Risk Score
-                final_score = min(100, max(ai_res.get("ai_risk_score", 0), sebi_audit.get("regulatory_penalty", 0)))
+                # 3. Composite Risk Calculation
+                final_score = min(100, max(ai_data.get("ai_risk_score", 0), sebi_data.get("regulatory_penalty", 0)))
                 final_level = "HIGH" if final_score >= 70 else ("MODERATE" if final_score >= 40 else "LOW")
                 
-                # 4. Log Telemetry to Database (Aryan)
-                primary_flag = (ai_res.get("red_flags") or sebi_audit.get("violations") or ["Unverified content"])[0]
-                log_scan(
-                    platform="Telegram/WhatsApp",
-                    risk_score=final_score,
-                    risk_level=final_level,
-                    primary_flag=primary_flag,
-                    language=selected_lang
+                # 4. Anonymous Logging to Telemetry Database
+                primary_flag = (ai_data.get("red_flags") or sebi_data.get("violations") or ["Unverified advisory"])[0]
+                log_scan("Telegram/WhatsApp", final_score, final_level, primary_flag, selected_lang)
+                
+                # 5. Visual Verdict Card
+                render_risk_verdict(
+                    final_score,
+                    final_level,
+                    ai_data.get("confidence_score", 88),
+                    ai_data.get("uncertainty_rationale", "Visual inspection of text and payment handles")
                 )
                 
-                # 5. Render Visual Results (Saina)
-                render_risk_gauge(
-                    final_score=final_score,
-                    level=final_level,
-                    confidence=ai_res.get("confidence_score", 85),
-                    rationale=ai_res.get("uncertainty_rationale", "Standard visual inspection")
-                )
-                
-                # Display Detected Red Flags
-                st.subheader("🚩 Detected Deceptive Vectors & Regulatory Breaches:")
-                combined_flags = list(set(ai_res.get("red_flags", []) + sebi_audit.get("violations", [])))
-                for flag in combined_flags:
-                    st.markdown(f"- ⚠️ **{flag}**")
-                    
-                # SEBI Registration Status
-                reg_status = sebi_audit.get("registration_status", {})
-                if reg_status.get("found"):
-                    if reg_status.get("is_valid_format"):
-                        st.success(f"Verified SEBI Registration Format: `{reg_status['raw_string']}` ({reg_status['category']})")
-                    else:
-                        st.error(f"Invalid / Fabricated SEBI Registration Claim: `{reg_status['raw_string']}`")
-                        
-                # Regional Voice Output (Gayatri)
+                # Regional Audio Player (Bharat-First Voice Explanation)
                 st.markdown("---")
-                st.subheader("🔊 Regional Audio Explanation (Bharat-First):")
-                explanation_text = ai_res.get("plain_explanation_regional") or ai_res.get("plain_explanation_english", "")
+                st.subheader(f"🔊 आपकी भाषा में वॉइस स्पष्टीकरण ({selected_lang}):")
+                explanation_text = ai_data.get("plain_explanation_regional") or ai_data.get("plain_explanation_english", "")
                 st.info(f"🗣️ *\"{explanation_text}\"*")
                 
                 audio_path = generate_regional_audio(explanation_text, selected_lang)
                 if audio_path and os.path.exists(audio_path):
                     st.audio(audio_path, format="audio/mp3")
-                    
-                # 1-Click Action Redressal
-                render_actionable_redressal()
+                
+                # Breakdown Columns
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.markdown("#### 🚩 पहचाने गए भ्रामक संकेत (Red Flags):")
+                    for flag in ai_data.get("red_flags", []):
+                        st.markdown(f"- ⚠️ **{flag}**")
+                        
+                with col_b:
+                    st.markdown("#### ⚖️ SEBI विनियामक उल्लंघन (Statutory Breaches):")
+                    violations = sebi_data.get("violations", []) + ai_data.get("sebi_violations", [])
+                    if violations:
+                        for v in list(set(violations)):
+                            st.markdown(f"- 🚫 **{v}**")
+                    else:
+                        st.write("कोई प्रत्यक्ष वैधानिक उल्लंघन नहीं पाया गया।")
+                        
+                # Registration Format Breakdown
+                reg_status = sebi_data.get("registration_status", {})
+                if reg_status.get("found"):
+                    if reg_status.get("is_valid_format"):
+                        st.success(f"वैध SEBI रजिस्ट्रेशन प्रारूप: `{reg_status['raw_string']}` ({reg_status['category']})")
+                    else:
+                        st.error(f"फर्जी / अमान्य SEBI रजिस्ट्रेशन दावा: `{reg_status['raw_string']}` (SEBI का आधिकारिक नंबर प्रारूप नहीं है)")
+                
+                # Pre-drafted Complaint Box for SCORES 2.0
+                st.markdown("---")
+                st.subheader("📝 तैयार शिकायत प्रारूप (Pre-Drafted Complaint for SCORES / 1930):")
+                complaint = ai_data.get("pre_drafted_complaint", "No complaint draft needed.")
+                st.code(complaint, language="text")
+                st.caption("इस प्रारूप को कॉपी करके सीधे SEBI SCORES 2.0 या 1930 पोर्टल पर साक्ष्य के रूप में दर्ज किया जा सकता है।")
+                
+                render_statutory_actions()
 
             except Exception as e:
-                st.error(f"Analysis failed: {e}")
+                st.error(f"जांच के दौरान तकनीकी त्रुटि: {e}")
 
-# TAB 2: COMMUNITY SCAM RADAR
+# -------------------------------------------------------------
+# TAB 2: VOICE-FIRST BHARAT QUERY (SPEAK OR AUDIO NOTE)
+# -------------------------------------------------------------
+with tab_voice:
+    st.subheader("2. बोल कर या पूछ कर जांचें (Voice-First Regional Query)")
+    st.caption("यदि आप टाइप नहीं करना चाहते, तो बोलें या अपनी भाषा में सवाल पूछें:")
+    
+    voice_query_text = st.text_area(
+        "अपना सवाल या ऑडियो ट्रांसक्रिप्शन यहाँ लिखें / बोलें:",
+        placeholder="उदाहरण: मुझे एक व्हाट्सएप ग्रुप में बोला गया कि ₹10,000 जमा करने पर 7 दिन में ₹30,000 पक्का मिलेगा। क्या यह सुरक्षित है?",
+        height=100
+    )
+    
+    # Preset Audio Queries
+    st.markdown("**या आम सवालों में से चुनें:**")
+    quick_q = st.radio(
+        "त्वरित उदाहरण प्रश्न:",
+        [
+            "कस्टम सवाल लिखें",
+            "व्हाट्सएप पर 200% गारंटीड रिटर्न का वादा किया जा रहा है।",
+            "एक व्यक्ति कह रहा है कि वह SEBI अप्रूव्ड है और पर्सनल UPI पर पैसा मांग रहा है।",
+            "टेलीग्राम पर F&O की 100% श्योर-शॉट कॉल दी जा रही है ₹2000 फीस लेकर।"
+        ]
+    )
+    
+    final_query = voice_query_text if quick_q == "कस्टम सवाल लिखें" else quick_q
+    
+    if st.button("🎙️ आवाज एवं सलाह की जांच करें (Analyze Voice Query)", type="primary"):
+        if not final_query.strip():
+            st.error("कृपया कोई प्रश्न लिखें या बोलें!")
+        else:
+            with st.spinner("आवाज एवं भाषा का विश्लेषण किया जा रहा है..."):
+                try:
+                    res = analyze_voice_query_for_scams(final_query, selected_lang)
+                    
+                    render_risk_verdict(
+                        res.get("ai_risk_score", 85),
+                        res.get("ai_risk_level", "HIGH"),
+                        res.get("confidence_score", 90),
+                        res.get("uncertainty_rationale", "Verbal inquiry forensic evaluation")
+                    )
+                    
+                    st.subheader(f"🔊 ऑडियो सलाह सुनें ({selected_lang}):")
+                    voice_resp = res.get("plain_explanation_regional") or res.get("plain_explanation_english", "")
+                    st.info(f"🗣️ *\"{voice_resp}\"*")
+                    
+                    audio_out = generate_regional_audio(voice_resp, selected_lang)
+                    if audio_out and os.path.exists(audio_out):
+                        st.audio(audio_out, format="audio/mp3")
+                        
+                    st.markdown("#### 🚩 मुख्य खतरे (Deceptive Markers):")
+                    for flag in res.get("red_flags", []):
+                        st.markdown(f"- ⚠️ **{flag}**")
+                        
+                    render_statutory_actions()
+                except Exception as e:
+                    st.error(f"विश्लेषण विफल: {e}")
+
+# -------------------------------------------------------------
+# TAB 3: NATIONAL COMMUNITY SCAM RADAR
+# -------------------------------------------------------------
 with tab_radar:
-    st.header("📊 Community Scam Radar (Bharat Telemetry)")
-    st.caption("Live, privacy-preserving threat intelligence on emerging financial fraud patterns.")
+    st.subheader("📊 राष्ट्रीय कम्युनिटी स्कैम रडार (National Threat Radar)")
+    st.caption("गोपनीयता-संरक्षित टेलीमेट्री: भारत भर में रोके गए वित्तीय धोखाधड़ी के लाइव आंकड़े।")
     
     analytics = get_radar_analytics()
     
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Scams Intercepted", analytics["total_scans"])
-    col2.metric("High-Risk Schemes Flagged", analytics["high_risk_scans"])
+    col1.metric("कुल जांची गई योजनाएं", analytics["total_scans"])
+    col2.metric("अवैध / उच्च जोखिम वाली योजनाएं", analytics["high_risk_scans"])
     intercept_rate = int((analytics["high_risk_scans"] / max(1, analytics["total_scans"])) * 100)
-    col3.metric("Scam Detection Rate", f"{intercept_rate}%")
+    col3.metric("धोखाधड़ी पहचान दर", f"{intercept_rate}%")
     
-    st.subheader("⚠️ Top Fraud Vectors Reported This Week")
-    for flag, freq in analytics["top_flags"]:
-        st.markdown(f"- **{flag}** ({freq} reports)")
-        
-    st.subheader("🕒 Recent Anonymous Verifications")
-    for scan in analytics["recent_scans"]:
-        badge = "🔴 HIGH" if scan[3] == "HIGH" else ("🟡 MOD" if scan[3] == "MODERATE" else "🟢 LOW")
-        st.write(f"`{scan[0]}` | **{scan[1]}** | Risk: {scan[2]}% ({badge}) | Flag: *{scan[4]}*")
+    st.markdown("---")
+    col_x, col_y = st.columns(2)
+    with col_x:
+        st.markdown("#### 📱 मुख्य धोखाधड़ी वाले माध्यम (Top Vector Platforms)")
+        for plat, cnt in analytics["top_platforms"]:
+            st.write(f"- **{plat}**: `{cnt} मामले दर्ज`")
+            
+    with col_y:
+        st.markdown("#### ⚠️ सबसे आम फर्जी दावे (Top Fraud Patterns)")
+        for flag, cnt in analytics["top_flags"]:
+            st.write(f"- **{flag}**: `{cnt} बार पहचाना गया`")
+            
+    st.markdown("---")
+    st.markdown("#### 🕒 हाल की गुमनाम जांचें (Recent Anonymous Verifications)")
+    for s in analytics["recent_scans"]:
+        tag = "🔴 HIGH" if s[3] == "HIGH" else ("🟡 MOD" if s[3] == "MODERATE" else "🟢 LOW")
+        st.write(f"`{s[0]}` | **{s[1]}** | जोखिम: {s[2]}% ({tag}) | कारण: *{s[4]}*")
 
-# TAB 3: SEBI PLAYBOOK
-with tab_rules:
-    st.header("📜 SEBI Investor Resilience Playbook")
+# -------------------------------------------------------------
+# TAB 4: BHASHINI & DIGITAL PUBLIC INFRASTRUCTURE (DPI)
+# -------------------------------------------------------------
+with tab_bhashini:
+    st.subheader("🇮🇳 भाषिणी एवं डिजिटल पब्लिक इन्फ्रास्ट्रक्चर (DPI) एकीकरण")
+    st.caption("इलेक्ट्रॉनिक्स और सूचना प्रौद्योगिकी मंत्रालय (MeitY) के राष्ट्रीय भाषा मिशन के अनुरूप आर्किटेक्चर।")
+    
+    meta = get_bhashini_pipeline_metadata()
+    
+    st.markdown(f"""
+    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:18px;">
+        <h4 style="color:#0B2545; margin-top:0;">DPI Integration Specifications:</h4>
+        <ul>
+            <li><b>DPI Provider:</b> {meta['dpi_provider']}</li>
+            <li><b>Supported Indic Languages:</b> 12 भारतीय भाषाएं (Hindi, Marathi, Bengali, Telugu, Tamil, Gujarati, Kannada, Malayalam, Punjabi, Odia, Urdu, English)</li>
+            <li><b>Speech Recognition (ASR):</b> Bhashini Indic-Conformer Speech-to-Text Pipeline</li>
+            <li><b>Speech Synthesis (TTS):</b> Bhashini Indic-VITS Regional Neural Audio</li>
+            <li><b>Translation Layer (NMT):</b> Bhashini Indic-Trans2 Direct Translation</li>
+            <li><b>Regulatory Verification:</b> SEBI SCORES 2.0 Intermediary Registry API Hooks</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown("""
-    ### Mandatory Regulatory Guardrails:
-    1. **No Guaranteed Returns:** Under SEBI (Investment Advisers) Regulations, 2013, no intermediary can assure or guarantee a fixed return.
-    2. **Official Registration Nomenclature:**
-       - `INA` $\rightarrow$ Investment Advisers
-       - `INH` $\rightarrow$ Research Analysts
-       - `INZ` $\rightarrow$ Stock Brokers
-    3. **Official Redressal Channels:**
-       - **SCORES Portal:** `scores.sebi.gov.in` (Toll-Free Helpline: 1800 22 7575 / 1800 266 7575)
-       - **National Cyber Crime Reporting:** Call **1930** immediately for banking/UPI frauds.
+    #### 💡 छोटे शहरों (Tier-2/3) के लिए कम-बैंडविड्थ एवं सुलभता लाभ:
+    1. **शून्य तकनीकी जटिलता:** बिना किसी टाइपिंग के सिर्फ आवाज रिकॉर्ड करके पूरी जांच संभव।
+    2. **स्थानीय उपमाएं (Analogies):** जटिल अंग्रेजी वित्तीय शब्दों (NAV, Derivates, P/E) के बदले रोजमर्रा की सरल उपमाओं में सीख।
+    3. **गोपनीयता आधारित डिजाइन:** किसी भी यूजर का फोन नंबर, बैंक खाता या OTP कभी स्टोर नहीं होता।
     """)
 
-# Mandatory Public-Good Guardrail Disclaimer (Page 3 Compliance)
+# -------------------------------------------------------------
+# TAB 5: SEBI STATUTORY GUARDRAILS
+# -------------------------------------------------------------
+with tab_guardrails:
+    st.subheader("📜 SEBI एवं NSDL वैधानिक सुरक्षा प्लेबुक")
+    st.markdown("""
+    ### महत्वपूर्ण विनियामक नियम (Mandatory Investor Protections):
+    1. **मुनाफे की कोई गारंटी नहीं (No Guaranteed Returns):** SEBI (Investment Advisers) Regulations, 2013 के अनुसार कोई भी रजिस्टर्ड मध्यस्थ मुनाफे की गारंटी नहीं दे सकता।
+    2. **वैध रजिस्ट्रेशन संख्या की पहचान:**
+       - `INA` + 9 अंक = इन्वेस्टमेंट एडवाइजर (IA)
+       - `INH` + 9 अंक = रिसर्च एनालिस्ट (RA)
+       - `INZ` + 9 अंक = स्टॉक ब्रोकर
+    3. **व्यक्तिगत खातों में भुगतान निषेध:** ब्रोकरेज या एडवाइजरी शुल्क कभी भी किसी व्यक्ति के व्यक्तिगत बचत खाते या निजी UPI आईडी पर नहीं भेजा जाता।
+    """)
+
+# Mandatory Non-Commercial Public Good Notice (Charter Page 3 Compliance)
 st.markdown("---")
-st.caption("⚖️ **Statutory Public-Good Notice:** ScamSatark is a non-commercial investor resilience and fraud-interception tool created for the SANGYAN Hackathon. It does not provide trading signals, buy/sell recommendations, stock tips, or commercial monetization funnels.")
+st.caption("⚖️ **वैधानिक सार्वजनिक-हित सूचना (Statutory Public-Good Notice):** ScamSatark एक गैर-व्यावसायिक जनहित सुरक्षा प्लेटफ़ॉर्म है जिसे SANGYAN हैकथॉन के तहत विकसित किया गया है। यह प्लेटफ़ॉर्म किसी भी प्रकार की स्टॉक टिप्स, ट्रेडिंग सिग्नल, शेयर खरीदने-बेचने की सलाह या व्यावसायिक वित्तीय उत्पाद प्रदान नहीं करता है।")
